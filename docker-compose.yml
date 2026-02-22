@@ -8,6 +8,16 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q listeners | grep -q 'port: 5672'"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   # Sensor: publica lecturas cada 1s (temp + humidity)
   sensor:
@@ -17,7 +27,8 @@ services:
       SENSOR_ID: sensor-1
       INTERVAL_MS: "1000"
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   # Worker de persistencia: consume y guarda lecturas
   ingestor:
@@ -28,7 +39,8 @@ services:
     volumes:
       - telemetry_data:/data
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   # Worker de reportes: consume jobs, ejecuta SQL agregado, llena jobs/job_attempts/job_results
   report-worker:
@@ -40,8 +52,10 @@ services:
     volumes:
       - telemetry_data:/data
     depends_on:
-      - rabbitmq
-      - ingestor
+      rabbitmq:
+        condition: service_healthy
+      ingestor:
+        condition: service_started
 
   # Next.js: crear jobs y consulta resultados (vía broker/eventos)
   report-web:
@@ -56,7 +70,8 @@ services:
     volumes:
       - web_data:/data
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   # Observabilidad: consume events.audit
   auditor:
@@ -67,7 +82,8 @@ services:
     volumes:
       - audit_data:/data
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   telemetry_data:
