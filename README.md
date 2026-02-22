@@ -10,7 +10,8 @@ Simular un flujo de telemetría y procesamiento asíncrono:
 2. `data-ingestor` consume y persiste lecturas en SQLite.
 3. `report-worker` consume jobs de reporte, calcula agregados y guarda resultados.
 4. `auditor` escucha eventos de auditoría y los persiste.
-5. `report-web` expone la interfaz web (actualmente plantilla base de Next.js).
+5. `report-web-worker` actúa como helper de la web y actualiza `web.db`.
+6. `report-web` expone la interfaz web (actualmente plantilla base de Next.js).
 
 ## Arquitectura (alto nivel)
 
@@ -20,6 +21,8 @@ sensor -> queue telemetry.readings -> data-ingestor -> telemetry.db
 
 report-web -> queue jobs.report.request -> report-worker -> telemetry.db (jobs/results)
                                        \-> events.audit (topic) -> auditor
+
+broker -> report-web-worker -> web.db -> report-web
 ```
 
 ## Estructura del repositorio
@@ -29,6 +32,7 @@ services/
   sensor/
   data-ingestor/
   report-worker/
+  report-web-worker/
   auditor/
   report-web/
 docker-compose.yml
@@ -96,6 +100,11 @@ docker compose down -v
 - `PORT` (default `3000`)
 - `NODE_ENV`
 
+### Report web worker
+
+- `RABBIT_URL`
+- `WEB_DB_PATH` (default `./web.db`)
+
 ## Colas / exchange usados
 
 - Queue: `telemetry.readings`
@@ -145,7 +154,7 @@ bun run dev
 Con `docker-compose` se crean volúmenes:
 
 - `telemetry_data` (telemetría + jobs/resultados)
-- `web_data`
+- `web_data` (compartido por `report-web` y `report-web-worker`)
 - `audit_data`
 
 ## Diagrama
@@ -162,6 +171,7 @@ Container_Boundary(c1, "Sistema de Telemetría") {
   Container(ingestor, "Data Ingestor", "TypeScript (Bun)", "Consume telemetría y persiste lecturas")
   Container(report_worker, "Report Worker", "TypeScript (Bun)", "Procesa jobs y calcula reportes agregados")
   Container(web, "Report Web", "Next.js", "UI para solicitar y consultar reportes")
+  Container(web_worker, "Report Web Worker", "TypeScript (Bun)", "Helper que consume eventos y actualiza web.db")
   Container(auditor, "Auditor", "TypeScript (Bun)", "Consume eventos de auditoría para observabilidad")
 
   ContainerDb(telemetry_db, "Telemetry DB", "SQLite", "Lecturas + jobs + resultados de reportes")
@@ -175,6 +185,7 @@ Rel(sensor, broker, "Publica lecturas", "AMQP queue: telemetry.readings")
 Rel(ingestor, broker, "Consume lecturas", "AMQP queue: telemetry.readings")
 Rel(report_worker, broker, "Consume jobs", "AMQP queue: jobs.report.request")
 Rel(report_worker, broker, "Reintentos/errores", "AMQP queue: jobs.dlq")
+Rel(web_worker, broker, "Consume eventos/resultados", "AMQP")
 
 Rel(sensor, broker, "Publica eventos", "AMQP topic: events.audit")
 Rel(ingestor, broker, "Publica eventos", "AMQP topic: events.audit")
@@ -185,4 +196,5 @@ Rel(ingestor, telemetry_db, "Inserta lecturas", "SQLite")
 Rel(report_worker, telemetry_db, "Lee lecturas y guarda resultados", "SQLite")
 Rel(auditor, audit_db, "Persiste eventos", "SQLite")
 Rel(web, web_db, "Usa almacenamiento local", "SQLite")
+Rel(web_worker, web_db, "Actualiza estado/resultados para la UI", "SQLite")
 ```
