@@ -1,0 +1,75 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # UI: http://localhost:15672 (guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # Sensor: publica lecturas cada 1s (temp + humidity)
+  sensor:
+    build: ./services/sensor
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      SENSOR_ID: sensor-1
+      INTERVAL_MS: "1000"
+    depends_on:
+      - rabbitmq
+
+  # Worker de persistencia: consume y guarda lecturas
+  ingestor:
+    build: ./services/data-ingestor
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      TELEMETRY_DB_PATH: /data/telemetry.db
+    volumes:
+      - telemetry_data:/data
+    depends_on:
+      - rabbitmq
+
+  # Worker de reportes: consume jobs, ejecuta SQL agregado, llena jobs/job_attempts/job_results
+  report-worker:
+    build: ./services/report-worker
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      TELEMETRY_DB_PATH: /data/telemetry.db
+      MAX_ATTEMPTS: "3"
+    volumes:
+      - telemetry_data:/data
+    depends_on:
+      - rabbitmq
+      - ingestor
+
+  # Next.js: crear jobs y consulta resultados (vía broker/eventos)
+  report-web:
+    build: ./services/report-web
+    ports:
+      - "3000:3000"
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      WEB_DB_PATH: /data/web.db
+      PORT: "3000"
+      NODE_ENV: production
+    volumes:
+      - web_data:/data
+    depends_on:
+      - rabbitmq
+
+  # Observabilidad: consume events.audit
+  auditor:
+    build: ./services/auditor
+    environment:
+      RABBIT_URL: amqp://guest:guest@rabbitmq:5672
+      AUDIT_DB_PATH: /data/audit.db
+    volumes:
+      - audit_data:/data
+    depends_on:
+      - rabbitmq
+
+volumes:
+  telemetry_data:
+  web_data:
+  audit_data:
