@@ -72,7 +72,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      report-web:
+      report-web-worker:
         condition: service_started
 
   # Worker helper de report-web
