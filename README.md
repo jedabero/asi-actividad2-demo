@@ -104,6 +104,24 @@ docker compose down -v
 - Queue: `audit.events`
 - Exchange topic: `events.audit`
 
+### Comando utiles para validar despue de iniciar los servicios
+
+```sh
+docker compose logs -f sensor ingestor auditor
+```
+
+```sh
+docker exec rabbitmq rabbitmqctl list_queues name messages_ready messages_unacknowledged consumers
+```
+
+```sh
+docker compose exec -T ingestor bun -e "import { Database } from 'bun:sqlite'; const db=new Database('/data/telemetry.db'); console.log(db.query('select count(*) as c from telemetry_readings').get());"
+```
+
+```sh
+docker compose exec -T auditor bun -e "import { Database } from 'bun:sqlite'; const db=new Database('/data/audit.db'); console.log(db.query('select count(*) as c from audit_events').get());"
+```
+
 ## Ejecutar servicios individualmente (sin Docker)
 
 Ejemplo general por servicio:
