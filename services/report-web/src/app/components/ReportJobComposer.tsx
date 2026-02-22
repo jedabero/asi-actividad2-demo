@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { LastMinuteForm } from "./LastMinuteForm";
 import { LastHourForm } from "./LastHourForm";
+import { LastDayForm } from "./LastDayForm";
 import { CustomRangeForm } from "./CustomRangeForm";
 import type { CreateReportJobAction, WindowKind } from "../actions";
 
@@ -13,6 +14,7 @@ type Props = {
 const OPTIONS: Array<{ value: WindowKind; label: string }> = [
   { value: "last_minute", label: "Last Minute" },
   { value: "last_hour", label: "Last Hour" },
+  { value: "last_day", label: "Last Day" },
   { value: "range", label: "Custom Range" },
 ];
 
@@ -51,6 +53,9 @@ export function ReportJobComposer({ createReportJob }: Props) {
         ) : null}
         {windowKind === "last_hour" ? (
           <LastHourForm action={createReportJob} />
+        ) : null}
+        {windowKind === "last_day" ? (
+          <LastDayForm action={createReportJob} />
         ) : null}
         {windowKind === "range" ? (
           <CustomRangeForm action={createReportJob} />

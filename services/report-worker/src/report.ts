@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 export type Window =
   | { kind: "last_minute" }
   | { kind: "last_hour" }
+  | { kind: "last_day" }
   | { kind: "range"; from: string; to: string };
 
 export type ReportJobRequest = {
@@ -34,14 +35,22 @@ type Range = { from: string; to: string };
 type WindowKind = Window["kind"];
 type WindowStrategy<K extends WindowKind> = (window: Extract<Window, { kind: K }>) => Range;
 
+const ONE_MINUTE = 60_000;
+const ONE_HOUR = ONE_MINUTE * 60;
+const ONE_DAY = ONE_HOUR * 24;
+
 const WINDOW_STRATEGIES: { [K in WindowKind]: WindowStrategy<K> } = {
   last_minute: () => {
     const now = Date.now();
-    return { from: new Date(now - 60_000).toISOString(), to: new Date(now).toISOString() };
+    return { from: new Date(now - ONE_MINUTE).toISOString(), to: new Date(now).toISOString() };
   },
   last_hour: () => {
     const now = Date.now();
-    return { from: new Date(now - 3_600_000).toISOString(), to: new Date(now).toISOString() };
+    return { from: new Date(now - ONE_HOUR).toISOString(), to: new Date(now).toISOString() };
+  },
+  last_day: () => {
+    const now = Date.now();
+    return { from: new Date(now - ONE_DAY).toISOString(), to: new Date(now).toISOString() };
   },
   range: (window) => ({ from: window.from, to: window.to }),
 };

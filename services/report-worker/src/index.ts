@@ -25,7 +25,7 @@ function validateJob(req: any): asserts req is ReportJobRequest {
   if (req.type !== "telemetry_report") throw new Error("Invalid job type");
   if (!req.window || typeof req.window.kind !== "string") throw new Error("Missing window");
   const k = req.window.kind;
-  if (k !== "last_minute" && k !== "last_hour" && k !== "range") throw new Error("Invalid window.kind");
+  if (k !== "last_minute" && k !== "last_hour" && k !== "last_day" && k !== "range") throw new Error("Invalid window.kind");
   if (k === "range") {
     if (typeof req.window.from !== "string" || typeof req.window.to !== "string") throw new Error("range requires from/to");
   }

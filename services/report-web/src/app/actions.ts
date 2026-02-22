@@ -7,6 +7,7 @@ import { upsertQueuedJob, updateJobStatus } from "@/lib/db.server";
 type ReportWindow =
   | { kind: "last_minute" }
   | { kind: "last_hour" }
+  | { kind: "last_day" }
   | { kind: "range"; from: string; to: string };
 
 type ReportJobRequest = {
@@ -37,6 +38,7 @@ function toIsoDateTime(value: string) {
 const WINDOW_STRATEGIES: { [K in WindowKind]: WindowStrategy<K> } = {
   last_minute: () => ({ kind: "last_minute" }),
   last_hour: () => ({ kind: "last_hour" }),
+  last_day: () => ({ kind: "last_day" }),
   range: ({ from, to }) => {
     if (!from || !to) throw new Error("range requires from and to");
     const fromIso = toIsoDateTime(from);
