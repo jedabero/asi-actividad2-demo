@@ -130,11 +130,41 @@ Con `docker-compose` se crean volúmenes:
 - `web_data`
 - `audit_data`
 
-## Estado actual / notas importantes
+## Diagrama
 
-- `report-web` sigue con la página por defecto de Next.js; la integración UI <-> jobs aún no está implementada en este repositorio.
-- En `docker-compose.yml` hay rutas de build con nombres que no existen actualmente:
-  - `./services/ingestor` debería ser `./services/data-ingestor`
-  - `./services/audit` debería ser `./services/auditor`
+```mermaid
+C4Container
+title Diagrama de contenedores para Sistema de Telemetría
 
-Si no se corrigen esas rutas, `docker compose up --build` fallará al construir esos servicios.
+Person(user, Usuario, "Usuario del sistema, solicita y ve reportes")
+
+Container_Boundary(c1, "Sistema de Telemetría") {
+  Container(broker, "RabbitMQ Broker", "RabbitMQ", "Broker de mensajería AMQP")
+  Container(sensor, "Sensor", "TypeScript (Bun)", "Publica lecturas de telemetría cada segundo")
+  Container(ingestor, "Data Ingestor", "TypeScript (Bun)", "Consume telemetría y persiste lecturas")
+  Container(report_worker, "Report Worker", "TypeScript (Bun)", "Procesa jobs y calcula reportes agregados")
+  Container(web, "Report Web", "Next.js", "UI para solicitar y consultar reportes")
+  Container(auditor, "Auditor", "TypeScript (Bun)", "Consume eventos de auditoría para observabilidad")
+
+  ContainerDb(telemetry_db, "Telemetry DB", "SQLite", "Lecturas + jobs + resultados de reportes")
+  ContainerDb(audit_db, "Audit DB", "SQLite", "Eventos de auditoría")
+  ContainerDb(web_db, "Web DB", "SQLite", "Datos locales del servicio web")
+}
+
+Rel(user, web, "Usa", "HTTP")
+Rel(web, broker, "Publica jobs", "AMQP queue: jobs.report.request")
+Rel(sensor, broker, "Publica lecturas", "AMQP queue: telemetry.readings")
+Rel(ingestor, broker, "Consume lecturas", "AMQP queue: telemetry.readings")
+Rel(report_worker, broker, "Consume jobs", "AMQP queue: jobs.report.request")
+Rel(report_worker, broker, "Reintentos/errores", "AMQP queue: jobs.dlq")
+
+Rel(sensor, broker, "Publica eventos", "AMQP topic: events.audit")
+Rel(ingestor, broker, "Publica eventos", "AMQP topic: events.audit")
+Rel(report_worker, broker, "Publica eventos", "AMQP topic: events.audit")
+Rel(auditor, broker, "Consume eventos", "AMQP queue: audit.events <- events.audit/#")
+
+Rel(ingestor, telemetry_db, "Inserta lecturas", "SQLite")
+Rel(report_worker, telemetry_db, "Lee lecturas y guarda resultados", "SQLite")
+Rel(auditor, audit_db, "Persiste eventos", "SQLite")
+Rel(web, web_db, "Usa almacenamiento local", "SQLite")
+```
