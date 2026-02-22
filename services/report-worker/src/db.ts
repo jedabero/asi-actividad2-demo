@@ -3,7 +3,7 @@ import { Database } from "bun:sqlite";
 export function initTelemetryDb(dbPath: string) {
   const db = new Database(dbPath);
 
-  db.exec(`
+  db.run(`
     PRAGMA journal_mode=WAL;
 
     -- readings (created by ingestor; safe to re-run)

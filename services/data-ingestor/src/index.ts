@@ -17,7 +17,7 @@ const AUDIT_EXCHANGE = "events.audit";
 function initDb() {
   const db = new Database(DB_PATH);
 
-  db.exec(`
+  db.run(`
     PRAGMA journal_mode=WAL;
 
     CREATE TABLE IF NOT EXISTS telemetry_readings (

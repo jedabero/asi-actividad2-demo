@@ -3,7 +3,7 @@ import { Database } from "bun:sqlite";
 export function initAuditDb(dbPath: string) {
   const db = new Database(dbPath);
 
-  db.exec(`
+  db.run(`
     PRAGMA journal_mode=WAL;
 
     CREATE TABLE IF NOT EXISTS audit_events (
