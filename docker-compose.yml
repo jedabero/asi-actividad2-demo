@@ -2,6 +2,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672" # UI: http://localhost:15672 (guest/guest)
@@ -22,6 +23,7 @@ services:
   # Sensor: publica lecturas cada 1s (temp + humidity)
   sensor:
     build: ./services/sensor
+    restart: unless-stopped
     environment:
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
       SENSOR_ID: sensor-1
@@ -33,6 +35,7 @@ services:
   # Worker de persistencia: consume y guarda lecturas
   ingestor:
     build: ./services/data-ingestor
+    restart: unless-stopped
     environment:
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
       TELEMETRY_DB_PATH: /data/telemetry.db
@@ -45,6 +48,7 @@ services:
   # Worker de reportes: consume jobs, ejecuta SQL agregado, llena jobs/job_attempts/job_results
   report-worker:
     build: ./services/report-worker
+    restart: unless-stopped
     environment:
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
       TELEMETRY_DB_PATH: /data/telemetry.db
@@ -60,6 +64,7 @@ services:
   # Next.js: crear jobs y consulta resultados (vía broker/eventos)
   report-web:
     build: ./services/report-web
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -78,6 +83,7 @@ services:
   # Worker helper de report-web
   report-web-worker:
     build: ./services/report-web-worker
+    restart: unless-stopped
     environment:
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
       WEB_DB_PATH: /data/web.db
@@ -90,6 +96,7 @@ services:
   # Observabilidad: consume events.audit
   auditor:
     build: ./services/auditor
+    restart: unless-stopped
     environment:
       RABBIT_URL: amqp://guest:guest@rabbitmq:5672
       AUDIT_DB_PATH: /data/audit.db

@@ -11,7 +11,7 @@ Simular un flujo de telemetría y procesamiento asíncrono:
 3. `report-worker` consume jobs de reporte, calcula agregados y guarda resultados.
 4. `auditor` escucha eventos de auditoría y los persiste.
 5. `report-web-worker` actúa como helper de la web y actualiza `web.db`.
-6. `report-web` expone la interfaz web (actualmente plantilla base de Next.js).
+6. `report-web` expone la interfaz web.
 
 ## Arquitectura (alto nivel)
 
@@ -111,9 +111,10 @@ docker compose down -v
 - Queue: `jobs.report.request`
 - Queue: `jobs.dlq`
 - Queue: `audit.events`
+- Queue: `report-web.events`
 - Exchange topic: `events.audit`
 
-### Comando utiles para validar despue de iniciar los servicios
+## Comandos para validar después de haber iniciado los servicios
 
 ```sh
 docker compose logs -f sensor ingestor auditor
