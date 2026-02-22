@@ -30,12 +30,25 @@ export type TelemetryReport = {
   humidityPct: Stats;
 };
 
-function toRange(window: Window): { from: string; to: string } {
-  const now = Date.now();
-  const to = new Date(now).toISOString();
-  if (window.kind === "last_minute") return { from: new Date(now - 60_000).toISOString(), to };
-  if (window.kind === "last_hour") return { from: new Date(now - 3_600_000).toISOString(), to };
-  return { from: window.from, to: window.to };
+type Range = { from: string; to: string };
+type WindowKind = Window["kind"];
+type WindowStrategy<K extends WindowKind> = (window: Extract<Window, { kind: K }>) => Range;
+
+const WINDOW_STRATEGIES: { [K in WindowKind]: WindowStrategy<K> } = {
+  last_minute: () => {
+    const now = Date.now();
+    return { from: new Date(now - 60_000).toISOString(), to: new Date(now).toISOString() };
+  },
+  last_hour: () => {
+    const now = Date.now();
+    return { from: new Date(now - 3_600_000).toISOString(), to: new Date(now).toISOString() };
+  },
+  range: (window) => ({ from: window.from, to: window.to }),
+};
+
+function toRange(window: Window): Range {
+  const strategy = WINDOW_STRATEGIES[window.kind] as WindowStrategy<typeof window.kind>;
+  return strategy(window as Extract<Window, { kind: typeof window.kind }>);
 }
 
 function statsForColumn(db: Database, column: "temperature_c" | "humidity_pct", args: { from: string; to: string; sensorId?: string }): Stats {

@@ -1,5 +1,6 @@
 import { createReportJob, refreshDashboard } from "./actions";
 import { listRecentJobs } from "@/lib/db.server";
+import { ReportJobComposer } from "./components/ReportJobComposer";
 
 export const dynamic = "force-dynamic";
 
@@ -34,81 +35,7 @@ export default function Home() {
             Crea jobs y consulta su estado desde el read model de web.
           </p>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            <form action={createReportJob} className="rounded-lg border border-zinc-200 p-4">
-              <h2 className="text-sm font-semibold">Last Minute</h2>
-              <input type="hidden" name="windowKind" value="last_minute" />
-              <label className="mt-3 block text-xs text-zinc-700" htmlFor="sensorIdMinute">
-                Sensor ID (opcional)
-              </label>
-              <input
-                id="sensorIdMinute"
-                name="sensorId"
-                type="text"
-                className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm"
-                placeholder="sensor-1"
-              />
-              <button className="mt-3 rounded bg-zinc-900 px-3 py-2 text-sm text-white" type="submit">
-                Enqueue
-              </button>
-            </form>
-
-            <form action={createReportJob} className="rounded-lg border border-zinc-200 p-4">
-              <h2 className="text-sm font-semibold">Last Hour</h2>
-              <input type="hidden" name="windowKind" value="last_hour" />
-              <label className="mt-3 block text-xs text-zinc-700" htmlFor="sensorIdHour">
-                Sensor ID (opcional)
-              </label>
-              <input
-                id="sensorIdHour"
-                name="sensorId"
-                type="text"
-                className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm"
-                placeholder="sensor-1"
-              />
-              <button className="mt-3 rounded bg-zinc-900 px-3 py-2 text-sm text-white" type="submit">
-                Enqueue
-              </button>
-            </form>
-
-            <form action={createReportJob} className="rounded-lg border border-zinc-200 p-4">
-              <h2 className="text-sm font-semibold">Custom Range</h2>
-              <input type="hidden" name="windowKind" value="range" />
-              <label className="mt-3 block text-xs text-zinc-700" htmlFor="rangeFrom">
-                From
-              </label>
-              <input
-                id="rangeFrom"
-                name="from"
-                type="datetime-local"
-                className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm"
-                required
-              />
-              <label className="mt-3 block text-xs text-zinc-700" htmlFor="rangeTo">
-                To
-              </label>
-              <input
-                id="rangeTo"
-                name="to"
-                type="datetime-local"
-                className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm"
-                required
-              />
-              <label className="mt-3 block text-xs text-zinc-700" htmlFor="sensorIdRange">
-                Sensor ID (opcional)
-              </label>
-              <input
-                id="sensorIdRange"
-                name="sensorId"
-                type="text"
-                className="mt-1 w-full rounded border border-zinc-300 px-3 py-2 text-sm"
-                placeholder="sensor-1"
-              />
-              <button className="mt-3 rounded bg-zinc-900 px-3 py-2 text-sm text-white" type="submit">
-                Enqueue
-              </button>
-            </form>
-          </div>
+          <ReportJobComposer createReportJob={createReportJob} />
 
           <form action={refreshDashboard} className="mt-4">
             <button className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm" type="submit">

@@ -20,6 +20,12 @@ type ReportJobRequest = {
 const RABBIT_URL = process.env.RABBIT_URL ?? "amqp://guest:guest@localhost:5672";
 const JOBS_QUEUE = "jobs.report.request";
 
+export type WindowKind = ReportWindow["kind"];
+type WindowStrategy<K extends WindowKind> = (args: {
+  from: string;
+  to: string;
+}) => Extract<ReportWindow, { kind: K }>;
+
 function toIsoDateTime(value: string) {
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) {
@@ -28,22 +34,32 @@ function toIsoDateTime(value: string) {
   return dt.toISOString();
 }
 
-function buildWindow(kind: string, from: string, to: string): ReportWindow {
-  if (kind === "last_minute") return { kind: "last_minute" };
-  if (kind === "last_hour") return { kind: "last_hour" };
-  if (kind === "range") {
+const WINDOW_STRATEGIES: { [K in WindowKind]: WindowStrategy<K> } = {
+  last_minute: () => ({ kind: "last_minute" }),
+  last_hour: () => ({ kind: "last_hour" }),
+  range: ({ from, to }) => {
     if (!from || !to) throw new Error("range requires from and to");
     const fromIso = toIsoDateTime(from);
     const toIso = toIsoDateTime(to);
     if (fromIso >= toIso) throw new Error("from must be before to");
     return { kind: "range", from: fromIso, to: toIso };
+  },
+};
+
+function buildWindow(kind: string, from: string, to: string): ReportWindow {
+  if (!Object.hasOwn(WINDOW_STRATEGIES, kind)) {
+    throw new Error("Invalid window kind");
   }
-  throw new Error("Invalid window kind");
+
+  const strategy = WINDOW_STRATEGIES[kind as WindowKind] as WindowStrategy<WindowKind>;
+  return strategy({ from, to });
 }
 
 function toText(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value : "";
 }
+
+export type CreateReportJobAction = (formData: FormData) => Promise<void>;
 
 export async function createReportJob(formData: FormData) {
   const windowKind = toText(formData.get("windowKind")).trim();
