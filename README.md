@@ -169,15 +169,23 @@ Person(user, Usuario, "Usuario del sistema, solicita y ve reportes")
 Container_Boundary(c1, "Sistema de Telemetría") {
   Container(broker, "RabbitMQ Broker", "RabbitMQ", "Broker de mensajería AMQP")
   Container(sensor, "Sensor", "TypeScript (Bun)", "Publica lecturas de telemetría cada segundo")
-  Container(ingestor, "Data Ingestor", "TypeScript (Bun)", "Consume telemetría y persiste lecturas")
   Container(report_worker, "Report Worker", "TypeScript (Bun)", "Procesa jobs y calcula reportes agregados")
-  Container(web, "Report Web", "Next.js", "UI para solicitar y consultar reportes")
-  Container(web_worker, "Report Web Worker", "TypeScript (Bun)", "Helper que consume eventos y actualiza web.db")
-  Container(auditor, "Auditor", "TypeScript (Bun)", "Consume eventos de auditoría para observabilidad")
 
-  ContainerDb(telemetry_db, "Telemetry DB", "SQLite", "Lecturas + jobs + resultados de reportes")
-  ContainerDb(audit_db, "Audit DB", "SQLite", "Eventos de auditoría")
-  ContainerDb(web_db, "Web DB", "SQLite", "Datos locales del servicio web")
+  Container_Boundary(c_ingest, "Ingesta y Telemetría") {
+    Container(ingestor, "Data Ingestor", "TypeScript (Bun)", "Consume telemetría y persiste lecturas")
+    ContainerDb(telemetry_db, "Telemetry DB", "SQLite", "Lecturas + jobs + resultados de reportes")
+  }
+
+  Container_Boundary(c_audit, "Auditoría") {
+    Container(auditor, "Auditor", "TypeScript (Bun)", "Consume eventos de auditoría para observabilidad")
+    ContainerDb(audit_db, "Audit DB", "SQLite", "Eventos de auditoría")
+  }
+
+  Container_Boundary(c_web, "Capa Web") {
+    Container(web, "Report Web", "Next.js", "UI para solicitar y consultar reportes")
+    Container(web_worker, "Report Web Worker", "TypeScript (Bun)", "Helper que consume eventos y actualiza web.db")
+    ContainerDb(web_db, "Web DB", "SQLite", "Datos locales del servicio web")
+  }
 }
 
 Rel(user, web, "Usa", "HTTP")
