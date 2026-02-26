@@ -12,10 +12,10 @@ type Props = {
 };
 
 const OPTIONS: Array<{ value: WindowKind; label: string }> = [
-  { value: "last_minute", label: "Last Minute" },
-  { value: "last_hour", label: "Last Hour" },
-  { value: "last_day", label: "Last Day" },
-  { value: "range", label: "Custom Range" },
+  { value: "last_minute", label: "Último minuto" },
+  { value: "last_hour", label: "Última hora" },
+  { value: "last_day", label: "Último día" },
+  { value: "range", label: "Rango personalizado" },
 ];
 
 export function ReportJobComposer({ createReportJob }: Props) {
@@ -23,14 +23,14 @@ export function ReportJobComposer({ createReportJob }: Props) {
 
   const selectedLabel = useMemo(
     () =>
-      OPTIONS.find((opt) => opt.value === windowKind)?.label ?? "Last Minute",
+      OPTIONS.find((opt) => opt.value === windowKind)?.label ?? "Último minuto",
     [windowKind],
   );
 
   return (
     <div className="mt-5 rounded-lg border border-zinc-200 p-4">
       <label className="block text-xs text-zinc-700" htmlFor="windowKindSelect">
-        Report Window
+        Ventana de reporte
       </label>
       <select
         id="windowKindSelect"
@@ -45,7 +45,7 @@ export function ReportJobComposer({ createReportJob }: Props) {
         ))}
       </select>
 
-      <p className="mt-2 text-xs text-zinc-600">Selected: {selectedLabel}</p>
+      <p className="mt-2 text-xs text-zinc-600">Seleccionado: {selectedLabel}</p>
 
       <div className="mt-4">
         {windowKind === "last_minute" ? (

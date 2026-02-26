@@ -7,7 +7,7 @@ type Props = {
 export function LastDayForm({ action }: Props) {
   return (
     <form action={action} className="rounded-lg border border-zinc-200 p-4">
-      <h2 className="text-sm font-semibold">Last Day</h2>
+      <h2 className="text-sm font-semibold">Último día</h2>
       <p className="mt-1 text-xs text-zinc-600">
         Reporte de las ultimas 24 horas.
       </p>
@@ -28,7 +28,7 @@ export function LastDayForm({ action }: Props) {
         className="mt-3 rounded bg-zinc-900 px-3 py-2 text-sm text-white"
         type="submit"
       >
-        Enqueue
+        Crear job
       </button>
     </form>
   );
